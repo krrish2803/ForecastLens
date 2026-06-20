@@ -1,0 +1,14 @@
+output/
+features.parquet
+features_blended.parquet
+__pycache__/
+*.pyc
+.env
+.DS_Store
+*.egg-info/
+dist/
+.pytest_cache/
+.venv/
+pickle/
+data/
+*.db

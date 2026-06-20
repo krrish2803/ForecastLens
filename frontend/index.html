@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIgnition Forecast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- SECTION 1: HERO / UPLOAD -->
+    <header class="hero">
+      <div class="hero-content">
+        <h1 class="logo">AIgnition Forecast</h1>
+        <p class="subtitle">Probabilistic revenue intelligence for e-commerce</p>
+      </div>
+      <div class="upload-zone card" id="uploadZone">
+        <div class="upload-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <p class="upload-text">Drop your CSV files here or click to browse</p>
+        <div class="file-status" id="fileStatus">
+          <span class="file-badge" id="googleBadge">google_ads.csv ✗</span>
+          <span class="file-badge" id="bingBadge">bing.csv ✗</span>
+          <span class="file-badge" id="metaBadge">meta.csv ✗</span>
+        </div>
+        <input type="file" id="fileInput" hidden multiple accept=".csv">
+        <div class="upload-actions">
+          <button class="btn-secondary" id="checkQualityBtn">Check Data Quality</button>
+          <button class="btn-primary" id="runForecastBtn" disabled>Run Forecast</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- SECTION 1b: DATA QUALITY SCORECARD -->
+    <section class="quality-section" id="qualitySection" style="display:none;">
+      <h2 class="section-title">Data Quality Scorecard</h2>
+      <div class="card quality-card">
+        <div class="quality-overview" id="qualityOverview"></div>
+        <div class="quality-detail" id="qualityDetail"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: FORECAST OVERVIEW -->
+    <section class="forecast-overview" id="forecastSection" style="display:none;">
+      <div class="horizon-selector">
+        <button class="horizon-btn active" data-horizon="30">30 days</button>
+        <button class="horizon-btn" data-horizon="60">60 days</button>
+        <button class="horizon-btn" data-horizon="90">90 days</button>
+      </div>
+      <div class="gating-toggle" id="gatingToggle" style="display:none;">
+        <label class="toggle-label">
+          <input type="checkbox" id="gatingCheckbox" checked>
+          <span class="toggle-text">Apply quality gating <span id="gatingBadge" class="badge-sm"></span></span>
+        </label>
+      </div>
+      <div class="metric-cards" id="metricCards">
+        <div class="card metric-card">
+          <p class="metric-label">Total Revenue</p>
+          <p class="metric-value loading" id="totalRevenue">--</p>
+          <p class="metric-sub">P50 range</p>
+        </div>
+        <div class="card metric-card">
+          <p class="metric-label">Blended ROAS</p>
+          <p class="metric-value loading" id="blendedRoas">--</p>
+          <p class="metric-sub">P50 at horizon</p>
+        </div>
+        <div class="card metric-card">
+          <p class="metric-label">Confidence Band</p>
+          <p class="metric-value loading" id="confidenceBand">--</p>
+          <p class="metric-sub">at P80 interval</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: PROBABILISTIC CHARTS -->
+    <section class="charts-section" id="chartsSection" style="display:none;">
+      <div class="chart-toggles">
+        <button class="chart-toggle active" data-channel="blended">Blended</button>
+        <button class="chart-toggle" data-channel="google">Google</button>
+        <button class="chart-toggle" data-channel="bing">Bing</button>
+        <button class="chart-toggle" data-channel="meta">Meta</button>
+      </div>
+      <div class="card chart-card">
+        <canvas id="forecastChart"></canvas>
+      </div>
+    </section>
+
+    <!-- SECTION 3b: RECONCILED BREAKDOWN -->
+    <section class="reconciled-section" id="reconciledSection" style="display:none;">
+      <h2 class="section-title">Reconciled Breakdown</h2>
+      <p class="section-subtitle">Campaign-type forecasts summed bottom-up — all levels internally consistent</p>
+      <div class="card reconciled-card">
+        <div class="reconciled-badge" id="reconciledBadge">⚙ Computing...</div>
+        <div class="reconciled-horizons" id="reconciledHorizons">
+          <button class="horizon-btn active" data-recon-horizon="30">30 days</button>
+          <button class="horizon-btn" data-recon-horizon="60">60 days</button>
+          <button class="horizon-btn" data-recon-horizon="90">90 days</button>
+        </div>
+        <div class="reconciled-table" id="reconciledTable"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: BUDGET SIMULATOR -->
+    <section class="simulator-section" id="simulatorSection" style="display:none;">
+      <h2 class="section-title">Budget Simulator</h2>
+      <div class="card simulator-card">
+        <div class="sim-controls">
+          <div class="sim-field">
+            <label>Channel</label>
+            <select id="simChannel" class="sim-input">
+              <option value="google">Google Ads</option>
+              <option value="bing">Bing Ads</option>
+              <option value="meta">Meta Ads</option>
+            </select>
+          </div>
+          <div class="sim-field">
+            <label>Current Spend ($)</label>
+            <input type="number" id="currentSpend" class="sim-input" value="1000">
+          </div>
+          <div class="sim-field">
+            <label>New Budget ($)</label>
+            <input type="range" id="budgetSlider" min="0" max="50000" value="5000" class="sim-slider">
+            <span class="slider-value" id="budgetValue">$5,000</span>
+          </div>
+        </div>
+        <div class="sim-results" id="simResults">
+          <div class="sim-result-item">
+            <span class="result-label">Projected Revenue</span>
+            <span class="result-value loading" id="simRevenue">--</span>
+          </div>
+          <div class="sim-result-item">
+            <span class="result-label">Projected ROAS</span>
+            <span class="result-value loading" id="simRoas">--</span>
+          </div>
+          <div class="sim-result-item">
+            <span class="result-label">Marginal ROAS</span>
+            <span class="result-value loading" id="simMarginalRoas">--</span>
+          </div>
+          <div class="sim-result-item">
+            <span class="result-label">Recommendation</span>
+            <span class="result-value" id="simRecommendation">--</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4b: BUDGET OPTIMIZER -->
+    <section class="optimizer-section" id="optimizerSection" style="display:none;">
+      <h2 class="section-title">Budget Optimizer</h2>
+      <p class="section-subtitle">Marginal-ROAS equalization across all channels</p>
+      <div class="card optimizer-card">
+        <div class="optimizer-grid">
+          <div class="opt-field">
+            <label>Total Budget ($)</label>
+            <input type="number" id="optBudget" class="opt-input" value="50000">
+          </div>
+          <button class="btn-primary" id="runOptimizerBtn">Run Optimizer</button>
+        </div>
+        <details class="opt-details">
+          <summary>Per-channel limits (optional)</summary>
+          <div class="opt-limits">
+            <div class="opt-limit">
+              <span class="opt-ch-name">Google</span>
+              <label>min</label><input type="number" id="optGoogleMin" class="opt-input-sm" value="0" placeholder="0">
+              <label>max</label><input type="number" id="optGoogleMax" class="opt-input-sm" value="50000" placeholder="no max">
+            </div>
+            <div class="opt-limit">
+              <span class="opt-ch-name">Bing</span>
+              <label>min</label><input type="number" id="optBingMin" class="opt-input-sm" value="0" placeholder="0">
+              <label>max</label><input type="number" id="optBingMax" class="opt-input-sm" value="50000" placeholder="no max">
+            </div>
+            <div class="opt-limit">
+              <span class="opt-ch-name">Meta</span>
+              <label>min</label><input type="number" id="optMetaMin" class="opt-input-sm" value="0" placeholder="0">
+              <label>max</label><input type="number" id="optMetaMax" class="opt-input-sm" value="50000" placeholder="no max">
+            </div>
+          </div>
+        </details>
+        <div class="opt-results" id="optResults" style="display:none;">
+          <div class="opt-summary" id="optSummary"></div>
+          <div class="opt-comparison" id="optTable"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4c: SCENARIO PLANNER -->
+    <section class="scenarios-section" id="scenariosSection" style="display:none;">
+      <h2 class="section-title">Scenario Planner</h2>
+      <p class="section-subtitle">Compare base, conservative, and aggressive futures</p>
+      <div class="card scenarios-card">
+        <div class="scenario-custom" id="scenarioCustom">
+          <details>
+            <summary>Custom assumptions</summary>
+            <div class="scenario-sliders">
+              <div class="scenario-slider-group">
+                <label>CPC change</label>
+                <input type="range" id="scCpc" class="sim-slider" min="-30" max="30" value="0">
+                <span id="scCpcVal" class="slider-value">0%</span>
+              </div>
+              <div class="scenario-slider-group">
+                <label>CVR change</label>
+                <input type="range" id="scCvr" class="sim-slider" min="-30" max="30" value="0">
+                <span id="scCvrVal" class="slider-value">0%</span>
+              </div>
+              <div class="scenario-slider-group">
+                <label>Seasonal uplift</label>
+                <input type="range" id="scSeasonal" class="sim-slider" min="0" max="40" value="0">
+                <span id="scSeasonalVal" class="slider-value">0%</span>
+              </div>
+              <div class="scenario-slider-group">
+                <label>Horizon</label>
+                <select id="scHorizon" class="sim-input">
+                  <option value="30">30 days</option>
+                  <option value="60">60 days</option>
+                  <option value="90">90 days</option>
+                </select>
+              </div>
+              <button class="btn-primary" id="applyCustomBtn" style="width:auto;align-self:end;">Apply</button>
+            </div>
+          </details>
+        </div>
+        <div class="scenario-table" id="scenarioTable"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 4d: DRIVER DECOMPOSITION -->
+    <section class="drivers-section" id="driversSection" style="display:none;">
+      <h2 class="section-title">Driver Decomposition</h2>
+      <p class="section-subtitle">Measured causes behind the revenue movement</p>
+      <div class="card drivers-card">
+        <div class="drivers-summary" id="driversSummary"></div>
+        <div class="drivers-detail" id="driversDetail"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 4e: FORECAST CHANGE DECOMPOSITION -->
+    <section class="fc-section" id="fcSection" style="display:none;">
+      <h2 class="section-title">Forecast Change Decomposition</h2>
+      <p class="section-subtitle">Why the forecast differs from recent actuals — spend vs efficiency drivers</p>
+      <div class="card fc-card">
+        <div class="fc-summary" id="fcSummary"></div>
+        <div class="fc-detail" id="fcDetail"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 4f: RISK & ANOMALY ALERTS -->
+    <section class="risks-section" id="risksSection" style="display:none;">
+      <h2 class="section-title">Risk &amp; Anomaly Alerts</h2>
+      <div class="card risks-card" id="risksCard"></div>
+    </section>
+
+    <!-- SECTION 5: AI CAUSAL SUMMARY -->
+    <section class="summary-section" id="summarySection" style="display:none;">
+      <h2 class="section-title">Why These Numbers?</h2>
+      <div class="card summary-card">
+        <div class="summary-badges" id="dataFlags"></div>
+        <div class="summary-content" id="summaryContent">
+          <div class="loading" style="height: 80px;"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/charts.js"></script>
+</body>
+</html>

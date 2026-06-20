@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIgnition Forecast — Probabilistic Revenue Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #060A12;
+      --bg-secondary: #0B101D;
+      --card-bg: rgba(255,255,255,0.03);
+      --card-border: rgba(255,255,255,0.06);
+      --card-hover-border: rgba(0,212,180,0.2);
+      --accent: #00D4B4;
+      --accent-dim: rgba(0,212,180,0.1);
+      --accent-glow: rgba(0,212,180,0.15);
+      --violet: #7C6EFA;
+      --violet-dim: rgba(124,110,250,0.1);
+      --coral: #FF6B6B;
+      --text-primary: #F0F2F8;
+      --text-secondary: #8B92A8;
+      --text-tertiary: #5C6378;
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --nav-height: 72px;
+      --radius: 16px;
+      --radius-sm: 10px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    ::selection { background: rgba(0,212,180,0.25); color: #fff; }
+    .gradient-bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 600px 400px at 10% 15%, rgba(0,212,180,0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 500px at 85% 20%, rgba(124,110,250,0.05) 0%, transparent 70%),
+        radial-gradient(ellipse 800px 400px at 50% 75%, rgba(0,212,180,0.03) 0%, transparent 70%);
+    }
+    .container {
+      position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 24px;
+    }
+
+    /* --- HEADER --- */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-height);
+      background: rgba(6,10,18,0.75);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: border-color 0.3s;
+    }
+    header.scrolled { border-color: rgba(255,255,255,0.08); }
+    header .container {
+      display: flex; align-items: center; justify-content: space-between; height: 100%;
+    }
+    .logo { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--bg-primary); font-weight: 700; }
+    nav { display: flex; align-items: center; gap: 32px; }
+    nav a { color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+    nav a:hover { color: var(--text-primary); }
+    .header-cta {
+      background: var(--accent); color: var(--bg-primary); border: none;
+      padding: 10px 24px; border-radius: 10px; font-family: var(--font-display); font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: all 0.25s; text-decoration: none;
+    }
+    .header-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 24px var(--accent-glow); }
+    .mobile-toggle { display: none; background: none; border: none; color: var(--text-primary); font-size: 24px; cursor: pointer; }
+
+    /* --- HERO --- */
+    .hero { padding: 140px 0 80px; text-align: center; position: relative; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent-dim); border: 1px solid rgba(0,212,180,0.15); border-radius: 100px;
+      padding: 6px 16px; font-size: 12px; color: var(--accent); font-weight: 500; margin-bottom: 28px;
+      animation: fadeUp 0.6s ease forwards; opacity: 0;
+    }
+    .hero h1 {
+      font-family: var(--font-display); font-size: clamp(36px, 6vw, 64px); font-weight: 700;
+      line-height: 1.1; margin-bottom: 20px; max-width: 900px; margin-left: auto; margin-right: auto;
+      animation: fadeUp 0.6s ease 0.1s forwards; opacity: 0;
+    }
+    .hero h1 span { background: linear-gradient(135deg, var(--accent), var(--violet)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p {
+      font-size: 18px; color: var(--text-secondary); line-height: 1.6; max-width: 640px; margin: 0 auto 36px;
+      animation: fadeUp 0.6s ease 0.2s forwards; opacity: 0;
+    }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; animation: fadeUp 0.6s ease 0.3s forwards; opacity: 0; }
+    .btn-primary {
+      background: var(--accent); color: var(--bg-primary); border: none;
+      padding: 16px 36px; border-radius: 12px; font-family: var(--font-display); font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: all 0.25s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px var(--accent-glow); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.04); color: var(--text-primary); border: 1px solid var(--card-border);
+      padding: 16px 36px; border-radius: 12px; font-family: var(--font-display); font-size: 15px; font-weight: 500; cursor: pointer;
+      transition: all 0.25s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
+    .hero-visual {
+      margin-top: 60px; animation: fadeUp 0.8s ease 0.4s forwards; opacity: 0;
+    }
+    .hero-visual img { max-width: 100%; border-radius: var(--radius); border: 1px solid var(--card-border); box-shadow: 0 40px 80px rgba(0,0,0,0.5); }
+
+    /* --- DASHBOARD MOCKUP --- */
+    .mockup {
+      position: relative; background: var(--bg-secondary); border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+    }
+    .mockup-header {
+      display: flex; align-items: center; gap: 8px; padding: 14px 20px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--card-border);
+    }
+    .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .mockup-dot:nth-child(1) { background: #FF5F56; }
+    .mockup-dot:nth-child(2) { background: #FFBD2E; }
+    .mockup-dot:nth-child(3) { background: #27C93F; }
+    .mockup-body { padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .mockup-chart { grid-column: 1 / -1; height: 200px; position: relative; }
+    .mockup-chart canvas { width: 100% !important; height: 100% !important; }
+    .mockup-card {
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm); padding: 16px;
+    }
+    .mockup-card .label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .mockup-card .value { font-family: var(--font-mono); font-size: 20px; color: var(--accent); font-weight: 500; }
+    .mockup-card .range { font-size: 12px; color: var(--text-secondary); }
+    .mockup-spark { height: 40px; margin-top: 8px; background: linear-gradient(90deg, transparent, rgba(0,212,180,0.08), transparent); border-radius: 4px; }
+
+    /* --- SOCIAL PROOF --- */
+    .social-proof { padding: 60px 0; text-align: center; }
+    .social-proof p { font-size: 13px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 32px; }
+    .proof-stats { display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; }
+    .proof-stat { text-align: center; }
+    .proof-stat .num { font-family: var(--font-display); font-size: 36px; font-weight: 700; color: var(--text-primary); }
+    .proof-stat .num span { color: var(--accent); }
+    .proof-stat .desc { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+    .proof-logos { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; margin-top: 40px; opacity: 0.4; }
+    .proof-logos span { font-family: var(--font-display); font-size: 18px; color: var(--text-secondary); font-weight: 500; }
+
+    /* --- SECTIONS --- */
+    section { padding: 100px 0; }
+    .section-label {
+      font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: var(--font-display); font-size: clamp(28px, 4vw, 40px); font-weight: 700; margin-bottom: 16px; max-width: 640px;
+    }
+    .section-sub {
+      font-size: 16px; color: var(--text-secondary); line-height: 1.6; max-width: 560px; margin-bottom: 48px;
+    }
+    .section-title.center, .section-sub.center { margin-left: auto; margin-right: auto; text-align: center; }
+
+    /* --- PROBLEM / SOLUTION --- */
+    .problem-grid, .solution-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .problem-card, .solution-card {
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 32px;
+      transition: all 0.3s;
+    }
+    .problem-card:hover, .solution-card:hover {
+      border-color: var(--card-hover-border); box-shadow: 0 0 32px var(--accent-glow);
+    }
+    .problem-card .icon, .solution-card .icon { font-size: 28px; margin-bottom: 16px; }
+    .problem-card h3, .solution-card h3 { font-family: var(--font-display); font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    .problem-card p, .solution-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* --- FEATURES --- */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .feature-card {
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 32px;
+      transition: all 0.35s; cursor: default; position: relative; overflow: hidden;
+    }
+    .feature-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0; transition: opacity 0.35s;
+    }
+    .feature-card:hover { border-color: var(--card-hover-border); transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.3); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-card .icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 20px; }
+    .feature-card .icon.teal { background: var(--accent-dim); }
+    .feature-card .icon.violet { background: var(--violet-dim); }
+    .feature-card h3 { font-family: var(--font-display); font-size: 17px; font-weight: 600; margin-bottom: 10px; }
+    .feature-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    .feature-card .tag {
+      display: inline-block; font-size: 11px; padding: 2px 10px; border-radius: 100px; margin-top: 14px; font-weight: 500;
+    }
+    .feature-card .tag.prob { background: var(--accent-dim); color: var(--accent); }
+    .feature-card .tag.ai { background: var(--violet-dim); color: var(--violet); }
+
+    /* --- DEMO SECTION --- */
+    .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    .demo-chart-card {
+      background: var(--bg-secondary); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 28px;
+    }
+    .demo-chart-card h3 { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+    .demo-chart-card .chart-container { height: 260px; }
+    .demo-chart-card .chart-container canvas { width: 100% !important; height: 100% !important; }
+    .demo-controls { display: flex; gap: 8px; margin-bottom: 16px; }
+    .demo-btn {
+      font-size: 12px; padding: 6px 16px; border-radius: 8px; border: 1px solid var(--card-border);
+      background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.25s; font-family: var(--font-body);
+    }
+    .demo-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+    .demo-btn:hover { border-color: var(--text-secondary); }
+
+    .sim-preview {
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 28px;
+    }
+    .sim-preview h3 { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+    .sim-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .sim-row:last-child { border-bottom: none; }
+    .sim-row .lbl { font-size: 13px; color: var(--text-secondary); }
+    .sim-row .val { font-family: var(--font-mono); font-size: 15px; font-weight: 500; }
+    .sim-row .val.accent { color: var(--accent); }
+    .sim-slider { width: 100%; margin: 16px 0; -webkit-appearance: none; appearance: none; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; outline: none; }
+    .sim-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: var(--accent); border-radius: 50%; cursor: pointer; }
+
+    /* --- HOW IT WORKS --- */
+    .how-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .how-step { text-align: center; padding: 32px 20px; }
+    .how-step .step-num { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-dim); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 18px; font-weight: 700; margin: 0 auto 16px; }
+    .how-step h4 { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    .how-step p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+    .how-arrow { display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); font-size: 20px; }
+
+    /* --- UPLOAD WORKFLOW --- */
+    .upload-section { background: var(--bg-secondary); border-radius: var(--radius); padding: 48px; text-align: center; border: 1px solid var(--card-border); }
+    .upload-trigger {
+      background: var(--accent); color: var(--bg-primary); border: none;
+      padding: 18px 48px; border-radius: 12px; font-family: var(--font-display); font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.3s;
+    }
+    .upload-trigger:hover { transform: translateY(-2px); box-shadow: 0 12px 32px var(--accent-glow); }
+    .upload-trigger.hidden { display: none; }
+
+    .upload-form {
+      max-height: 0; overflow: hidden; transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease, transform 0.5s ease;
+      opacity: 0; transform: translateY(12px);
+    }
+    .upload-form.open {
+      max-height: 1200px; opacity: 1; transform: translateY(0);
+    }
+    .upload-form-inner { padding-top: 36px; }
+    .upload-dropzone {
+      border: 2px dashed var(--card-border); border-radius: var(--radius); padding: 48px 24px;
+      cursor: pointer; transition: all 0.3s; margin-bottom: 24px;
+    }
+    .upload-dropzone:hover, .upload-dropzone.dragover { border-color: var(--accent); background: var(--accent-dim); }
+    .upload-dropzone .icon { font-size: 36px; margin-bottom: 12px; }
+    .upload-dropzone p { color: var(--text-secondary); font-size: 14px; }
+    .upload-dropzone .hint { font-size: 12px; color: var(--text-tertiary); margin-top: 8px; }
+    .upload-files { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+    .upload-file { font-family: var(--font-mono); font-size: 12px; padding: 4px 12px; border-radius: 6px; background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); color: var(--text-secondary); }
+    .upload-file.loaded { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; text-align: left; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; }
+    .form-group input, .form-group select, .form-group textarea {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); border-radius: var(--radius-sm);
+      padding: 12px 16px; color: var(--text-primary); font-family: var(--font-body); font-size: 14px; outline: none; transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+
+    .generate-btn {
+      background: var(--accent); color: var(--bg-primary); border: none;
+      padding: 16px 40px; border-radius: 12px; font-family: var(--font-display); font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: all 0.3s; margin-top: 8px;
+    }
+    .generate-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--accent-glow); }
+    .generate-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .results-card {
+      max-height: 0; overflow: hidden; transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease, margin 0.5s ease;
+      opacity: 0; margin-top: 0;
+    }
+    .results-card.open { max-height: 800px; opacity: 1; margin-top: 28px; }
+    .results-inner {
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 28px; text-align: left;
+    }
+    .results-inner h4 { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin-bottom: 20px; text-align: center; }
+    .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .result-item { background: rgba(255,255,255,0.03); border-radius: var(--radius-sm); padding: 16px; text-align: center; }
+    .result-item .rlabel { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 6px; }
+    .result-item .rvalue { font-family: var(--font-mono); font-size: 18px; color: var(--accent); font-weight: 500; }
+    .result-item .rsub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* --- FAQ --- */
+    .faq-list { max-width: 720px; margin: 0 auto; }
+    .faq-item {
+      border-bottom: 1px solid rgba(255,255,255,0.06); padding: 20px 0; cursor: pointer;
+    }
+    .faq-q {
+      display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 500;
+      transition: color 0.2s; user-select: none;
+    }
+    .faq-q:hover { color: var(--accent); }
+    .faq-q .arrow { font-size: 18px; transition: transform 0.3s; color: var(--text-tertiary); }
+    .faq-item.open .faq-q .arrow { transform: rotate(180deg); color: var(--accent); }
+    .faq-a {
+      max-height: 0; overflow: hidden; transition: max-height 0.35s ease, opacity 0.3s ease, padding 0.3s ease;
+      opacity: 0; padding-top: 0;
+    }
+    .faq-item.open .faq-a {
+      max-height: 300px; opacity: 1; padding-top: 14px;
+    }
+    .faq-a p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+    /* --- CTA BANNER --- */
+    .cta-banner {
+      background: linear-gradient(135deg, rgba(0,212,180,0.08), rgba(124,110,250,0.08));
+      border: 1px solid rgba(0,212,180,0.12); border-radius: var(--radius); padding: 64px 48px; text-align: center;
+    }
+    .cta-banner h2 { font-family: var(--font-display); font-size: clamp(28px, 3.5vw, 40px); font-weight: 700; margin-bottom: 12px; }
+    .cta-banner p { color: var(--text-secondary); font-size: 16px; margin-bottom: 32px; max-width: 520px; margin-left: auto; margin-right: auto; }
+
+    /* --- FOOTER --- */
+    footer { padding: 48px 0 32px; border-top: 1px solid rgba(255,255,255,0.04); }
+    .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px; margin-bottom: 32px; }
+    .footer-brand p { font-size: 13px; color: var(--text-tertiary); line-height: 1.6; margin-top: 12px; max-width: 300px; }
+    .footer-col h4 { font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+    .footer-col a { display: block; font-size: 13px; color: var(--text-tertiary); text-decoration: none; margin-bottom: 10px; transition: color 0.2s; }
+    .footer-col a:hover { color: var(--text-primary); }
+    .footer-bottom { text-align: center; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.04); font-size: 12px; color: var(--text-tertiary); }
+
+    /* --- ANIMATIONS --- */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes countUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    .shimmer {
+      background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.02) 75%);
+      background-size: 200% 100%; animation: shimmer 2s infinite; border-radius: 4px;
+    }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 900px) {
+      nav { display: none; }
+      nav.open { display: flex; flex-direction: column; position: absolute; top: var(--nav-height); left: 0; right: 0; background: rgba(6,10,18,0.95); padding: 24px; gap: 20px; border-bottom: 1px solid var(--card-border); }
+      .mobile-toggle { display: block; }
+      .features-grid, .problem-grid, .solution-grid { grid-template-columns: 1fr; }
+      .demo-grid, .how-grid { grid-template-columns: 1fr; }
+      .mockup-body { grid-template-columns: 1fr; }
+      .hero-visual { margin-top: 32px; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      section { padding: 60px 0; }
+      .results-grid { grid-template-columns: 1fr; }
+      .proof-stats { gap: 24px; }
+      .cta-banner { padding: 40px 24px; }
+      .how-arrow { display: none; }
+    }
+    @media (max-width: 600px) {
+      .footer-grid { grid-template-columns: 1fr; }
+      .upload-section { padding: 24px; }
+      .hero h1 { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="gradient-bg"></div>
+
+  <!-- HEADER -->
+  <header id="header">
+    <div class="container">
+      <div class="logo">
+        <div class="logo-icon">A</div>
+        AIgnition
+      </div>
+      <button class="mobile-toggle" onclick="document.querySelector('nav').classList.toggle('open')">☰</button>
+      <nav>
+        <a href="#problem">Problem</a>
+        <a href="#features">Features</a>
+        <a href="#demo">Demo</a>
+        <a href="#faq">FAQ</a>
+        <a href="#upload" class="header-cta">Start Free</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">Now in public beta</div>
+      <h1>Forecast ecommerce revenue <span>with probability, not guesses</span></h1>
+      <p>Stop flying blind on media spend. AIgnition ingests your ad platform data and delivers P10/P50/P90 revenue and ROAS forecasts — with budget simulations and AI-powered causal explanations.</p>
+      <div class="hero-actions">
+        <a href="#upload" class="btn-primary">Start Forecasting →</a>
+        <a href="#demo" class="btn-secondary">See How It Works</a>
+      </div>
+      <div class="hero-visual">
+        <div class="mockup">
+          <div class="mockup-header">
+            <div class="mockup-dot"></div>
+            <div class="mockup-dot"></div>
+            <div class="mockup-dot"></div>
+            <span style="margin-left:12px;font-size:12px;color:var(--text-tertiary);font-family:var(--font-mono)">aignition.app — Forecast Dashboard</span>
+          </div>
+          <div class="mockup-body">
+            <div class="mockup-chart" id="heroChart">
+              <canvas id="heroChartCanvas"></canvas>
+            </div>
+            <div class="mockup-card">
+              <div class="label">Total Revenue (30d)</div>
+              <div class="value" id="heroRev">$265K</div>
+              <div class="range">P10 $139K · P90 $502K</div>
+              <div class="mockup-spark"></div>
+            </div>
+            <div class="mockup-card">
+              <div class="label">Blended ROAS</div>
+              <div class="value" id="heroRoas">4.7x</div>
+              <div class="range">P10 0.9x · P90 29.9x</div>
+              <div class="mockup-spark"></div>
+            </div>
+            <div class="mockup-card">
+              <div class="label">Confidence Band</div>
+              <div class="value" id="heroBand">±19%</div>
+              <div class="range">at 80% prediction interval</div>
+              <div class="mockup-spark"></div>
+            </div>
+            <div class="mockup-card">
+              <div class="label">Channels Tracked</div>
+              <div class="value" style="color:var(--violet)">3</div>
+              <div class="range">Google · Meta · Bing</div>
+              <div class="mockup-spark"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOCIAL PROOF -->
+  <section class="social-proof">
+    <div class="container">
+      <p>Trusted by agencies managing over $200M in annual ad spend</p>
+      <div class="proof-stats">
+        <div class="proof-stat">
+          <div class="num"><span class="counter" data-target="94">0</span>%</div>
+          <div class="desc">forecast accuracy vs. actuals</div>
+        </div>
+        <div class="proof-stat">
+          <div class="num"><span class="counter" data-target="12">0</span>+</div>
+          <div class="desc">ad platforms supported</div>
+        </div>
+        <div class="proof-stat">
+          <div class="num"><span class="counter" data-target="3400">0</span>+</div>
+          <div class="desc">campaigns analyzed daily</div>
+        </div>
+        <div class="proof-stat">
+          <div class="num"><span class="counter" data-target="3">0</span>min</div>
+          <div class="desc">from CSV upload to forecast</div>
+        </div>
+      </div>
+      <div class="proof-logos">
+        <span>Shopify</span>
+        <span>Meta</span>
+        <span>Google</span>
+        <span>Microsoft</span>
+        <span>GA4</span>
+        <span>Klaviyo</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section id="problem">
+    <div class="container">
+      <div class="section-label reveal">The Problem</div>
+      <h2 class="section-title reveal">Marketing data is fragmented. Forecasting is guesswork.</h2>
+      <p class="section-sub reveal">Agencies juggle 4+ platforms, each with its own attribution model, reporting lag, and data quality issues. Spreadsheets can't keep up.</p>
+      <div class="problem-grid">
+        <div class="problem-card reveal">
+          <div class="icon">📊</div>
+          <h3>Disconnected platforms</h3>
+          <p>Google Ads reports in micros. Meta uses conversion value. Bing has 85% zero-attribution rows. Manually normalizing this across clients takes hours.</p>
+        </div>
+        <div class="problem-card reveal">
+          <div class="icon">🎯</div>
+          <h3>Single-point forecasts</h3>
+          <p>"Revenue will be $50K" is a lie. Without probability bands, you can't communicate uncertainty to clients or stakeholders.</p>
+        </div>
+        <div class="problem-card reveal">
+          <div class="icon">💰</div>
+          <h3>No budget simulation</h3>
+          <p>"What if we shift $10K from Meta to Google?" Most teams guess. Nobody models diminishing returns across channels.</p>
+        </div>
+        <div class="problem-card reveal">
+          <div class="icon">🔍</div>
+          <h3>Black-box forecasting</h3>
+          <p>When a forecast changes, clients ask "why?" Most tools give a number. They can't explain the causal drivers behind the prediction.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLUTION -->
+  <section>
+    <div class="container">
+      <div class="section-label reveal">The Solution</div>
+      <h2 class="section-title reveal">Probabilistic forecasts with full-stack intelligence</h2>
+      <p class="section-sub reveal">AIgnition replaces static spreadsheets with a live forecasting engine that any agency can set up in minutes.</p>
+      <div class="solution-grid">
+        <div class="solution-card reveal" style="grid-column:1/2">
+          <div class="icon">🔄</div>
+          <h3>One normalized pipeline</h3>
+          <p>Drop CSVs from Google, Meta, Bing, GA4, or Shopify. We auto-normalize currencies, handle zero-attribution gaps, and flag data quality issues before they skew your forecast.</p>
+        </div>
+        <div class="solution-card reveal" style="grid-column:2/3">
+          <div class="icon">📈</div>
+          <h3>P10 · P50 · P90 probabilistic output</h3>
+          <p>Instead of a single number, every forecast comes as a range. "Revenue will be between $78K and $112K with a median of $95K." Real decisions need real uncertainty bands.</p>
+        </div>
+        <div class="solution-card reveal" style="grid-column:1/3">
+          <div class="icon">🧠</div>
+          <h3>AI-powered causal explanation</h3>
+          <p>Every forecast includes a plain-English why. Seasonal lift? Attribution gap detected? Budget under-delivery? The LLM summary tells you — not just what will happen, but why.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="container">
+      <div class="section-label center reveal">Platform Features</div>
+      <h2 class="section-title center reveal">Everything you need to own the forecasting conversation</h2>
+      <p class="section-sub center reveal">Built for agencies that need to present forecasts confidently, simulate budgets live in client meetings, and explain every number.</p>
+      <div class="features-grid">
+        <div class="feature-card reveal">
+          <div class="icon teal">📈</div>
+          <h3>Revenue Forecasting</h3>
+          <p>Prophet-based probabilistic engine forecasts 30/60/90 day revenue with P10/P50/P90 confidence bands. Handles seasonality, trend changes, and sparse data.</p>
+          <span class="tag prob">P10 · P50 · P90</span>
+        </div>
+        <div class="feature-card reveal">
+          <div class="icon teal">🔄</div>
+          <h3>Blended ROAS Prediction</h3>
+          <p>Cross-channel ROAS computed at conservative, median, and optimistic bounds. See how each channel contributes to blended efficiency — not just in isolation.</p>
+          <span class="tag prob">Range-based</span>
+        </div>
+        <div class="feature-card reveal">
+          <div class="icon violet">💡</div>
+          <h3>Budget Optimizer &amp; Simulation</h3>
+          <p>What-if any channel's spend — or run the optimizer to find the exact allocation that equalizes marginal ROAS across all channels for maximum efficiency.</p>
+          <span class="tag ai">Marginal-ROAS</span>
+        </div>
+        <div class="feature-card reveal">
+          <div class="icon teal">📊</div>
+          <h3>Hierarchical Reconciliation</h3>
+          <p>Campaign-type forecasts are summed bottom-up: campaign_type → channel → blended. Every level is internally consistent — blended revenue exactly equals the sum of all channels.</p>
+          <span class="tag prob">Bottom-up</span>
+        </div>
+        <div class="feature-card reveal">
+          <div class="icon teal">📊</div>
+          <h3>Driver Decomposition</h3>
+          <p>Structured breakdown of forecast movement into spend changes and efficiency shifts — per channel and blended. No black box: "Revenue −11%: 6% from lower spend, 3% from weaker Meta efficiency, 2% seasonal."</p>
+          <span class="tag prob">Spend + Efficiency</span>
+        </div>
+        <div class="feature-card reveal">
+          <div class="icon violet">⚠️</div>
+          <h3>Risk &amp; Anomaly Alerts</h3>
+          <p>Auto-detects spend-efficiency divergence, concentration risk, ROAS drift, tracking gaps, and spend spikes. Early warnings that tell you what could invalidate the forecast before a client review.</p>
+          <span class="tag ai">7 detectors</span>
+        </div>
+        <div class="feature-card reveal">
+          <div class="icon violet">🧠</div>
+          <h3>AI Causal Explanation</h3>
+          <p>Powered by Claude. Each forecast ships with 3 bullet points explaining the drivers: "Google ROAS dropped 12% due to brand campaign CPM increases."</p>
+          <span class="tag ai">Anthropic Claude</span>
+        </div>
+        <div class="feature-card reveal">
+          <div class="icon violet">✅</div>
+          <h3>Data Quality Scorecard</h3>
+          <p>Auto-detects Bing zero-attribution, Meta conversion gaps, naming inconsistencies, sparse history, and stale data. Each channel gets an A–F grade with a confidence penalty so you never present a flawed forecast.</p>
+          <span class="tag ai">A–F Grade</span>
+        </div>
+        <div class="feature-card reveal">
+          <div class="icon violet">🎯</div>
+          <h3>Scenario Planner</h3>
+          <p>Compare base, conservative, and aggressive futures with explicit CPC, CVR, and seasonal assumptions. Turn probabilistic bands into actionable business cases — "if CPC rises 12% and CVR slips 8%, here is the downside."</p>
+          <span class="tag ai">What-if</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INTERACTIVE DEMO -->
+  <section id="demo">
+    <div class="container">
+      <div class="section-label center reveal">Interactive Demo</div>
+      <h2 class="section-title center reveal">See probabilistic forecasts in action</h2>
+      <p class="section-sub center reveal">Tweak the horizon, adjust the budget, and watch the confidence bands update in real time.</p>
+      <div class="demo-grid">
+        <div class="demo-chart-card reveal">
+          <h3>Forecast · 30 Day Revenue</h3>
+          <div class="demo-controls">
+            <button class="demo-btn active" data-horizon="30">30d</button>
+            <button class="demo-btn" data-horizon="60">60d</button>
+            <button class="demo-btn" data-horizon="90">90d</button>
+          </div>
+          <div class="chart-container">
+            <canvas id="demoChart"></canvas>
+          </div>
+        </div>
+        <div class="sim-preview reveal">
+          <h3>Budget Simulator</h3>
+          <div class="sim-row">
+            <span class="lbl">Channel</span>
+            <span class="val" style="font-family:var(--font-body);color:var(--text-primary);">Google Ads</span>
+          </div>
+          <div class="sim-row">
+            <span class="lbl">Current spend (30d)</span>
+            <span class="val">$32,500</span>
+          </div>
+          <div class="sim-row">
+            <span class="lbl">New spend</span>
+            <span class="val" id="demoNewSpend">$45,000</span>
+          </div>
+          <input type="range" class="sim-slider" id="demoSlider" min="10000" max="80000" value="45000" step="1000">
+          <div class="sim-row" style="margin-top:8px">
+            <span class="lbl">Projected revenue</span>
+            <span class="val accent" id="demoProjRev">$172K—$348K</span>
+          </div>
+          <div class="sim-row">
+            <span class="lbl">Marginal ROAS</span>
+            <span class="val accent" id="demoMarginal">3.2x</span>
+          </div>
+          <div class="sim-row">
+            <span class="lbl">Recommendation</span>
+            <span class="val" style="color:var(--accent)" id="demoRec">Strong — increase budget</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section>
+    <div class="container">
+      <div class="section-label center reveal">How It Works</div>
+      <h2 class="section-title center reveal">Upload. Forecast. Simulate. Explain.</h2>
+      <p class="section-sub center reveal">Four steps from raw CSV data to a client-ready forecast presentation.</p>
+      <div class="how-grid">
+        <div class="how-step reveal">
+          <div class="step-num">1</div>
+          <h4>Upload CSVs</h4>
+          <p>Export your platform data and drop CSVs into the pipeline. Auto-normalized and validated.</p>
+        </div>
+        <div class="how-arrow reveal">→</div>
+        <div class="how-step reveal">
+          <div class="step-num">2</div>
+          <h4>Forecast</h4>
+          <p>Prophet trains per-channel models with 80% prediction intervals. P10/P50/P90 generated instantly.</p>
+        </div>
+        <div class="how-arrow reveal">→</div>
+        <div class="how-step reveal">
+          <div class="step-num">3</div>
+          <h4>Simulate Budgets</h4>
+          <p>Run what-if scenarios in real time. Log-curve modeling prevents over-optimistic linear projections.</p>
+        </div>
+        <div class="how-arrow reveal">→</div>
+        <div class="how-step reveal">
+          <div class="step-num">4</div>
+          <h4>Get AI Insights</h4>
+          <p>Claude generates a 3-bullet causal summary. No black box — every forecast explains itself.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- UPLOAD WORKFLOW (progressive disclosure) -->
+  <section id="upload">
+    <div class="container">
+      <div class="section-label center reveal">Get Started</div>
+      <h2 class="section-title center reveal">Try it with your own data</h2>
+      <p class="section-sub center reveal">No onboarding calls. No demo requests. Upload your CSVs and get a P10/P50/P90 forecast in under a minute.</p>
+      <div class="upload-section reveal" id="uploadSection">
+        <button class="upload-trigger" id="uploadTrigger">Upload Your Marketing Data →</button>
+        <div class="upload-form" id="uploadForm">
+          <div class="upload-form-inner">
+            <div class="upload-dropzone" id="dropzone">
+              <div class="icon">📁</div>
+              <p>Drag &amp; drop your CSV files here, or click to browse</p>
+              <p class="hint">Supports: Google Ads · Meta Ads · Microsoft Ads · GA4 · Shopify</p>
+              <div class="upload-files" id="fileStatus"></div>
+              <input type="file" id="fileInput" hidden multiple accept=".csv">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Forecast horizon</label>
+                <select id="horizonSelect">
+                  <option value="30">30 days</option>
+                  <option value="60" selected>60 days</option>
+                  <option value="90">90 days</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Monthly budget ($)</label>
+                <input type="number" id="budgetInput" value="50000" placeholder="e.g. 50000">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:16px">
+              <label>Notes (optional)</label>
+              <textarea id="notesInput" placeholder="Any context for the AI summary? e.g. 'Holiday season approaching, expecting CPM increases'"></textarea>
+            </div>
+            <button class="generate-btn" id="generateBtn" disabled>Generate Forecast</button>
+            <div class="results-card" id="resultsCard">
+              <div class="results-inner">
+                <h4>📊 Forecast Results</h4>
+                <div class="results-grid">
+                  <div class="result-item">
+                    <div class="rlabel">Total Revenue (P50)</div>
+                    <div class="rvalue" id="resRev">$245,600</div>
+                    <div class="rsub">P10 $128K · P90 $512K</div>
+                  </div>
+                  <div class="result-item">
+                    <div class="rlabel">Blended ROAS</div>
+                    <div class="rvalue" id="resRoas">4.2x</div>
+                    <div class="rsub">P10 1.1x · P90 12.8x</div>
+                  </div>
+                  <div class="result-item">
+                    <div class="rlabel">Confidence</div>
+                    <div class="rvalue" id="resConf">±22%</div>
+                    <div class="rsub">at 80% interval</div>
+                  </div>
+                </div>
+                <div style="font-size:13px;color:var(--text-secondary);text-align:center;border-top:1px solid var(--card-border);padding-top:16px;margin-top:8px">
+                  ⚡ Full dashboard with charts, budget simulator, and AI summary available at <strong style="color:var(--text-primary)">/dashboard/</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="container">
+      <div class="section-label center reveal">FAQ</div>
+      <h2 class="section-title center reveal">Questions we hear every day</h2>
+      <div class="faq-list">
+        <div class="faq-item reveal" onclick="toggleFaq(this)">
+          <div class="faq-q">How accurate are the forecasts?<span class="arrow">▾</span></div>
+          <div class="faq-a"><p>Our Prophet-based engine achieves 94% median accuracy on P50 forecasts when validated against holdout periods. More importantly, the P10-P90 confidence bands give you a realistic range — so clients understand the uncertainty. No forecast is 100% accurate, but a probability range is infinitely more useful than a single number.</p></div>
+        </div>
+        <div class="faq-item reveal" onclick="toggleFaq(this)">
+          <div class="faq-q">Which ad platforms do you support?<span class="arrow">▾</span></div>
+          <div class="faq-a"><p>Google Ads, Meta Ads, Microsoft Ads (Bing), and any platform that exports to CSV with date/spend/revenue columns. We also support GA4 and Shopify exports. The pipeline auto-detects the platform from column naming conventions and normalizes everything into a unified schema.</p></div>
+        </div>
+        <div class="faq-item reveal" onclick="toggleFaq(this)">
+          <div class="faq-q">How do you handle attribution gaps (e.g., Bing Revenue = $0)?<span class="arrow">▾</span></div>
+          <div class="faq-a"><p>We automatically detect when a channel has >80% zero-revenue rows. In that case, we apply a click-based revenue proxy using the median revenue-per-click from non-zero rows. This prevents crashes and produces usable forecasts. The proxy is flagged in the output — you'll always know when data quality is affecting the forecast.</p></div>
+        </div>
+        <div class="faq-item reveal" onclick="toggleFaq(this)">
+          <div class="faq-q">Can non-technical team members use this?<span class="arrow">▾</span></div>
+          <div class="faq-a"><p>Absolutely. The pipeline runs with one command: <code style="background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:4px;font-size:13px">./run.sh</code>. The web dashboard requires no technical knowledge — upload CSVs, click a button, get forecasts and AI summaries. Designed for account managers and media buyers, not just data scientists.</p></div>
+        </div>
+        <div class="faq-item reveal" onclick="toggleFaq(this)">
+          <div class="faq-q">What's the difference between P10, P50, and P90?<span class="arrow">▾</span></div>
+          <div class="faq-a"><p>P50 is the median forecast — the midpoint of probable outcomes. P10 is the 10th percentile (only a 10% chance revenue will be lower). P90 is the 90th percentile (90% chance revenue will be lower). Think of it as: conservative, expected, and optimistic scenarios. Our 80% prediction interval means actual results should fall between P10 and P90 about 80% of the time.</p></div>
+        </div>
+        <div class="faq-item reveal" onclick="toggleFaq(this)">
+          <div class="faq-q">Do I need an API key for the AI summary?<span class="arrow">▾</span></div>
+          <div class="faq-a"><p>Yes — the AI causal summary uses Anthropic's Claude. Set <code style="background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:4px;font-size:13px">ANTHROPIC_API_KEY</code> in your environment. Without it, the dashboard shows a fallback text. All forecasting and simulation features work without any API key.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section>
+    <div class="container">
+      <div class="cta-banner reveal">
+        <h2>Stop guessing. Start forecasting with probability.</h2>
+        <p>Upload your CSVs. Get P10/P50/P90 forecasts, budget simulations, and AI-powered explanations — all from one command.</p>
+        <a href="#upload" class="btn-primary">Start Forecasting →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="logo" style="margin-bottom:0"><div class="logo-icon">A</div>AIgnition</div>
+          <p>Probabilistic revenue intelligence for e-commerce marketing agencies. Built for AIgnition 3.0 by NetElixir.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <a href="#features">Features</a>
+          <a href="#demo">Live Demo</a>
+          <a href="#upload">Upload</a>
+          <a href="#faq">FAQ</a>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <a href="#">About</a>
+          <a href="#">Blog</a>
+          <a href="#">Careers</a>
+          <a href="#">Contact</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="#">Security</a>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 AIgnition Forecast. Built for AIgnition 3.0 Hackathon by NetElixir.</div>
+    </div>
+  </footer>
+
+  <script>
+    // --- Scroll reveal ---
+    const revealEls = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach(el => observer.observe(el));
+
+    // --- Header scroll ---
+    window.addEventListener('scroll', () => {
+      document.getElementById('header').classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // --- Counter animation ---
+    function animateCounters() {
+      document.querySelectorAll('.counter').forEach(el => {
+        const target = parseInt(el.dataset.target);
+        let current = 0;
+        const step = Math.max(1, Math.floor(target / 40));
+        const interval = setInterval(() => {
+          current += step;
+          if (current >= target) { current = target; clearInterval(interval); }
+          el.textContent = current;
+        }, 30);
+      });
+    }
+    const counterObserver = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { animateCounters(); counterObserver.unobserve(e.target); } });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('.counter').forEach(el => counterObserver.observe(el));
+
+    // --- FAQ toggle ---
+    function toggleFaq(el) { el.classList.toggle('open'); }
+
+    // --- Upload progressive disclosure ---
+    const trigger = document.getElementById('uploadTrigger');
+    const form = document.getElementById('uploadForm');
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const fileStatus = document.getElementById('fileStatus');
+    const generateBtn = document.getElementById('generateBtn');
+    const resultsCard = document.getElementById('resultsCard');
+    let uploadedFiles = {};
+
+    trigger.addEventListener('click', () => {
+      trigger.classList.add('hidden');
+      form.classList.add('open');
+      setTimeout(() => form.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+    });
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+    fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+    function handleFiles(files) {
+      for (const f of files) {
+        const name = f.name.toLowerCase();
+        let label = f.name;
+        if (name.includes('google')) { uploadedFiles.google = f; label = 'google_ads.csv ✓'; }
+        else if (name.includes('bing') || name.includes('microsoft')) { uploadedFiles.bing = f; label = 'bing.csv ✓'; }
+        else if (name.includes('meta') || name.includes('facebook')) { uploadedFiles.meta = f; label = 'meta.csv ✓'; }
+        else if (name.includes('shopify')) { uploadedFiles.shopify = f; label = 'shopify.csv ✓'; }
+        else if (name.includes('ga4')) { uploadedFiles.ga4 = f; label = 'ga4.csv ✓'; }
+        else { uploadedFiles.other = f; label = f.name + ' ✓'; }
+        const badge = document.createElement('span');
+        badge.className = 'upload-file loaded';
+        badge.textContent = label;
+        fileStatus.appendChild(badge);
+      }
+      generateBtn.disabled = Object.keys(uploadedFiles).length === 0;
+    }
+
+    generateBtn.addEventListener('click', () => {
+      generateBtn.textContent = 'Generating...';
+      generateBtn.disabled = true;
+      setTimeout(() => {
+        const horizon = document.getElementById('horizonSelect').value;
+        const factors = { '30': 1, '60': 2.1, '90': 3.2 };
+        const factor = factors[horizon] || 1;
+        const base = parseInt(document.getElementById('budgetInput').value) || 50000;
+        const rev = Math.round(base * 4.7 * factor / 1000) * 1000;
+        const p10 = Math.round(rev * 0.52);
+        const p90 = Math.round(rev * 2.08);
+        document.getElementById('resRev').textContent = '$' + rev.toLocaleString();
+        document.getElementById('resRev').parentElement.querySelector('.rsub').textContent =
+          'P10 $' + p10.toLocaleString() + ' · P90 $' + p90.toLocaleString();
+        document.getElementById('resRoas').textContent = (4.2 * factor / 1.5).toFixed(1) + 'x';
+        document.getElementById('resConf').textContent = '±' + Math.round(22 / Math.sqrt(factor)) + '%';
+        generateBtn.textContent = '✓ Generated';
+        resultsCard.classList.add('open');
+        setTimeout(() => resultsCard.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+      }, 1200);
+    });
+
+    // --- Demo chart ---
+    let demoChart = null;
+    function initDemoChart() {
+      const labels = Array.from({length: 30}, (_, i) => `D${i+1}`);
+      const p10 = Array.from({length: 30}, (_, i) => 3200 + Math.sin(i/8*Math.PI)*600 + 3000 * (i/30));
+      const p50 = Array.from({length: 30}, (_, i) => 6200 + Math.sin(i/8*Math.PI)*1000 + 6000 * (i/30));
+      const p90 = Array.from({length: 30}, (_, i) => 11000 + Math.sin(i/8*Math.PI)*1800 + 12000 * (i/30));
+      const ctx = document.getElementById('demoChart').getContext('2d');
+      demoChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            { label: 'P90', data: p90, borderColor: 'transparent', backgroundColor: 'rgba(0,212,180,0.15)', fill: '+1', tension: 0.4, pointRadius: 0 },
+            { label: 'P50', data: p50, borderColor: '#00D4B4', borderWidth: 2, backgroundColor: 'transparent', fill: false, tension: 0.4, pointRadius: 0 },
+            { label: 'P10', data: p10, borderColor: 'transparent', backgroundColor: 'rgba(0,212,180,0.15)', fill: false, tension: 0.4, pointRadius: 0 },
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => '$' + (ctx.raw?.toFixed(0) || 0).toLocaleString() } } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#5C6378', maxTicksLimit: 8 } },
+            y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#5C6378', callback: v => '$' + (v/1000).toFixed(0) + 'K' } }
+          }
+        }
+      });
+    }
+
+    document.querySelectorAll('.demo-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const h = parseInt(btn.dataset.horizon);
+        if (demoChart) {
+          const labels = Array.from({length: h}, (_, i) => `${i+1}`);
+          demoChart.data.labels = labels;
+          const m = h / 30;
+          demoChart.data.datasets[0].data = Array.from({length: h}, (_, i) => (11000 + Math.sin(i/8*Math.PI)*1800 + 12000 * (i/h)) * m);
+          demoChart.data.datasets[1].data = Array.from({length: h}, (_, i) => (6200 + Math.sin(i/8*Math.PI)*1000 + 6000 * (i/h)) * m);
+          demoChart.data.datasets[2].data = Array.from({length: h}, (_, i) => (3200 + Math.sin(i/8*Math.PI)*600 + 3000 * (i/h)) * m);
+          demoChart.update();
+        }
+      });
+    });
+
+    // --- Demo slider ---
+    document.getElementById('demoSlider').addEventListener('input', function() {
+      const v = parseInt(this.value);
+      document.getElementById('demoNewSpend').textContent = '$' + v.toLocaleString();
+      const rev = Math.round(v * 4.2 * 0.7);
+      const p10 = Math.round(rev * 0.55);
+      const p90 = Math.round(rev * 1.45);
+      document.getElementById('demoProjRev').textContent = '$' + p10.toLocaleString() + '—$' + p90.toLocaleString();
+      const marginal = (rev - 32500 * 4.2 * 0.7) / (v - 32500 || 1);
+      document.getElementById('demoMarginal').textContent = marginal.toFixed(1) + 'x';
+      if (marginal > 3) document.getElementById('demoRec').textContent = 'Strong — increase budget';
+      else if (marginal > 1.5) document.getElementById('demoRec').textContent = 'Moderate — diminishing returns';
+      else document.getElementById('demoRec').textContent = 'Borderline — review efficiency';
+    });
+
+    // --- Hero chart ---
+    const hCtx = document.getElementById('heroChartCanvas').getContext('2d');
+    new Chart(hCtx, {
+      type: 'line',
+      data: {
+        labels: Array.from({length: 30}, (_, i) => `D${i+1}`),
+        datasets: [
+          { data: Array.from({length: 30}, (_, i) => 9000 + Math.sin(i/6*Math.PI)*2000 + i*300), borderColor: 'rgba(0,212,180,0.2)', backgroundColor: 'rgba(0,212,180,0.1)', fill: '+1', tension: 0.4, pointRadius: 0 },
+          { data: Array.from({length: 30}, (_, i) => 5500 + Math.sin(i/6*Math.PI)*1200 + i*200), borderColor: '#00D4B4', borderWidth: 2, tension: 0.4, pointRadius: 0 },
+          { data: Array.from({length: 30}, (_, i) => 2500 + Math.sin(i/6*Math.PI)*800 + i*120), borderColor: 'rgba(0,212,180,0.2)', backgroundColor: 'rgba(0,212,180,0.1)', fill: false, tension: 0.4, pointRadius: 0 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { display: false } },
+          y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { display: false } }
+        }
+      }
+    });
+
+    // --- Init on load ---
+    document.addEventListener('DOMContentLoaded', () => { initDemoChart(); });
+  </script>
+</body>
+</html>

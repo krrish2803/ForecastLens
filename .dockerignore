@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+*.parquet
+output/
+pickle/
+data/
+.DS_Store
+.git/
